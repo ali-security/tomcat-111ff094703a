@@ -543,6 +543,12 @@ class Http2UpgradeHandler extends AbstractStream implements InternalHttpUpgradeH
                     Integer.toString(se.getStreamId()), se.getError(), se.getMessage()));
         }
 
+        // A stream reset sent by the server is just as effective a DoS vector
+        // as one received from the client (the "MadeYouReset" attack where the
+        // client sends frames that force the server to reset the stream) so it
+        // triggers the same overhead increase.
+        increaseOverheadCount(getProtocol().getOverheadResetFactor());
+
         // Write a RST frame
         byte[] rstFrame = new byte[13];
         // Length
@@ -1391,7 +1397,7 @@ class Http2UpgradeHandler extends AbstractStream implements InternalHttpUpgradeH
     }
 
 
-    private void increaseOverheadCount(int increment) {
+    protected void increaseOverheadCount(int increment) {
         overheadCount.addAndGet(increment);
     }
 
